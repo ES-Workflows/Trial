@@ -3,7 +3,7 @@ name: Run Selenium headless
 on:
   schedule:
     - cron: "15 20 1 * *"   # first day of month 20:15 UTC
-  workflow_dispatch: {}      # manual trigger
+  workflow_dispatch: {}
 
 jobs:
   scrape:
@@ -27,13 +27,19 @@ jobs:
 
       - name: Run Infoshare Selenium script
         env:
-          DOWNLOAD_DIR: ${{ runner.temp }}/downloads
+          # Use the repo workspace so it persists and is easy to inspect
+          DOWNLOAD_DIR: ${{ github.workspace }}/downloads
         run: |
           mkdir -p "$DOWNLOAD_DIR"
           python scripts/infoshare_download.py
+
+      - name: List download dir (debug)
+        run: |
+          echo "Listing ${{ github.workspace }}/downloads ..."
+          ls -lah ${{ github.workspace }}/downloads || true
 
       - name: Upload artifact (CSV/XLS)
         uses: actions/upload-artifact@v4
         with:
           name: infoshare-download
-          path: ${{ runner.temp }}/downloads
+          path: ${{ github.workspace }}/downloads
