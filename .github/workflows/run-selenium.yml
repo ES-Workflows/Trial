@@ -1,0 +1,39 @@
+name: Run Selenium headless
+
+on:
+  schedule:
+    - cron: "15 20 1 * *"   # first day of month 20:15 UTC
+  workflow_dispatch: {}      # manual trigger
+
+jobs:
+  scrape:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Chrome + ChromeDriver
+        uses: browser-actions/setup-chrome@v1
+        with:
+          chrome-version: stable
+          install-chromedriver: true
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install Python packages
+        run: pip install -r requirements.txt
+
+      - name: Run Infoshare Selenium script
+        env:
+          DOWNLOAD_DIR: ${{ runner.temp }}/downloads
+        run: |
+          mkdir -p "$DOWNLOAD_DIR"
+          python scripts/infoshare_download.py
+
+      - name: Upload artifact (CSV/XLS)
+        uses: actions/upload-artifact@v4
+        with:
+          name: infoshare-download
+          path: ${{ runner.temp }}/downloads
